@@ -2,7 +2,7 @@ var express = require('express');
 var app = express();
 var fetch = require('node-fetch');
 
-var server = app.listen(8080, '0.0.0.0', function () {
+var server = app.listen(process.env.PORT || 3000, function () {
   var host = server.address().address
   var port = server.address().port
   console.log("Server listening at http://%s:%s", host, port)
