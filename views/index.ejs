@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Coronavirus Tracker</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.1/leaflet.css" />
+    <link rel='shortcut icon' href='favicon.ico' type='image/x-icon' />
+    <style type="text/css">
+      body {
+       position: absolute;
+       top: 0;
+       bottom: 0;
+       left: 0;
+       right: 0;
+       padding: 0;
+       margin: 0; 
+      }
+      .leaflet-container{
+        background-color:#c5e8ff;
+      }
+      .about {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: white;
+        background: rgba(255,255,255,0.8);
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        border-radius: 5px;
+      }
+      .about h4 {
+        margin: 0 0 5px;
+        color: #777;
+      }
+      .info {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: white;
+        background: rgba(255,255,255,0.8);
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        border-radius: 5px;
+      }
+      .info h4 {
+        margin: 0 0 5px;
+        color: #777;
+      }
+      .legend {
+        line-height: 18px;
+        color: #555;
+      }
+      .legend i {
+        width: 18px;
+        height: 18px;
+        margin-right: 8px;
+        opacity: 0.7;
+      }
+    </style>
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.1/leaflet.js"></script>
+  </head>
+  <body>
+    <div id='map' style='position: absolute; width: 100%; top: 0; bottom: 0;'></div>
+    <% if(cases !== null){ %>
+      <script>
+
+        let highlighted = null;
+
+        $.getJSON('countries.geo.json', function(countries) {
+          
+          function matchCountry(name, cases) {
+            for (let i = 0; i < cases.length; i ++) {
+              if (cases[i].country === 'USA' && name === 'United States') {
+                return cases[i];
+              } else if (cases[i].country === 'UK' && name === 'United Kingdom') {
+                return cases[i];
+              } else if (cases[i].country === 'UAE' && name === 'United Arab Emirates') {
+                return cases[i];
+              } else if (cases[i].country === 'Czechia' && name === 'Czech Rep.') {
+                return cases[i];
+              } else if (cases[i].country === 'Bosnia and Herzegovina' && name === 'Bosnia and Herz.') {
+                return cases[i];
+              } else if (cases[i].country === 'N. Korea' && name === 'Dem. Rep. Korea') {
+                return cases[i];
+              } else if (cases[i].country === 'S. Korea' && name === 'Korea') {
+                return cases[i];
+              } else if (cases[i].country === 'Laos' && name === 'Lao PDR') {
+                return cases[i];
+              } else if (cases[i].country === 'Dominican Republic' && name === 'Dominican Rep.') {
+                return cases[i];
+              } else if (cases[i].country === name) {
+                return cases[i];
+              }
+            }
+            return null;
+          }
+
+          let data = countries;
+          let cases = JSON.parse('<%- cases %>');
+
+          for (let j = 0; j < data.features.length; j ++) {
+            data.features[j].properties.cases = 0;
+            data.features[j].properties.todayCases = 0;
+            data.features[j].properties.deaths = 0;
+            data.features[j].properties.todayDeaths = 0;
+            data.features[j].properties.recovered = 0;
+            data.features[j].properties.critical = 0;
+            let match = matchCountry(data.features[j].properties.name, cases);
+            if (match !== null) {
+              data.features[j].properties.cases = match.cases;
+              data.features[j].properties.todayCases = match.todayCases;
+              data.features[j].properties.deaths = match.deaths;
+              data.features[j].properties.todayDeaths = match.todayDeaths;
+              data.features[j].properties.recovered = match.recovered;
+              data.features[j].properties.critical = match.critical;
+            } else {
+              console.log(data.features[j].properties.name);
+            }
+          }
+
+          var map = L.map('map').setView([40.866667, 	34.566667], 2);
+          var geojson;
+
+          if (L.Browser.touch) {
+            map.dragging.disable();
+            map.doubleClickZoom.disable();
+          }
+
+          function getColor(d) {
+            return d > 10000 ? '#800026' :
+                  d > 5000  ? '#BD0026' :
+                  d > 2000  ? '#E31A1C' :
+                  d > 1000  ? '#FC4E2A' :
+                  d > 500   ? '#FD8D3C' :
+                  d > 20   ? '#FEB24C' :
+                  d > 0    ? '#FED976' :
+                            '#FFFFFF';
+          }
+
+          function style(feature) {
+            return {
+              stroke: true,
+              fill: true,
+              fillColor: getColor(feature.properties.cases),
+              weight: 0.5,
+              opacity: 1,
+              color: 'black',
+              dashArray: '3',
+              fillOpacity: 0.7
+            };
+          }
+
+          function highlightFeature(e) {
+            if (highlighted !== null) {
+              geojson.resetStyle(highlighted);
+              highlighted = null;
+            }
+            var layer = e.target;
+
+            layer.setStyle({
+              stroke: true,
+              weight: 1,
+              color: 'black',
+              dashArray: '',
+              fillOpacity: 0.7
+            });
+
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+              layer.bringToFront();
+            }
+
+            info.update(layer.feature.properties);
+            highlighted = e.target;
+          }
+
+          function resetHighlight(e) {
+            geojson.resetStyle(e.target);
+            info.update();
+          }
+
+        
+          function onEachFeature(feature, layer) {
+            layer.on({
+              'vmouseover mouseover': highlightFeature,
+              'vmouseleave mouseout': resetHighlight,
+              'click': highlightFeature
+            });
+          }
+
+          function zoomToFeature(e) {
+            map.fitBounds(e.target.getBounds());
+          }
+
+          geojson = L.geoJson(data, {
+            clickable: true,
+            style: style,
+            onEachFeature: onEachFeature
+          }).addTo(map);
+
+          /* About */
+
+          var about = L.control({position: 'bottomleft'});
+
+          about.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'about');
+            this._div.innerHTML = '<h4>Eyeonechi</h4>2020';
+            return this._div;
+          };
+
+          about.addTo(map);
+
+          /* Info */
+
+          var info = L.control();
+
+          info.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'info');
+            this.update();
+            return this._div;
+          };
+
+          info.update = function (props) {
+            this._div.innerHTML = '<h4>Coronavirus Statistics</h4>'
+            + (props
+            ? '<b>' + props.name + '</b><br />'
+              + props.cases + ' cases<br />'
+              + props.todayCases + ' cases today<br />'
+              + props.deaths + ' deaths<br />'
+              + props.todayDeaths + ' deaths today<br />'
+              + props.recovered + ' recovered<br />'
+              + props.critical + ' critical<br />'
+            : (L.Browser.touch) ? 'Tap a country' : 'Hover over a country');
+          };
+
+          info.addTo(map);
+
+          /* Legend */
+
+          var legend = L.control({position: 'bottomright'});
+
+          legend.onAdd = function (map) {
+
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = [0, 1, 20, 500, 1000, 2000, 5000, 10000],
+                labels = [];
+
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < grades.length; i ++) {
+              div.innerHTML +=
+                '<div style="display: block">'
+                + '<i style="display: inline-block; background:' + getColor(grades[i] + 1) + ';"></i>'
+                + '<span style="display: inline-block;">' + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '</span>'
+                + '</div>' : '+');
+            }
+
+            return div;
+          };
+
+          legend.addTo(map);
+
+        });
+      </script>
+    <% } %>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "coronavirus-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "yarn": "^1.22.0",
+    "node": "^10.16.3"
+  },
+  "dependencies": {
+    "ejs": "^3.0.1",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.0"
+  },
+  "scripts": {
+    "start": "node src/server.js"
+  }
+}
