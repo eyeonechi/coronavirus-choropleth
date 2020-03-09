@@ -4,8 +4,10 @@
     <title>Coronavirus Tracker</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.1/leaflet.css" />
     <link rel='shortcut icon' href='favicon.ico' type='image/x-icon' />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+      integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+      crossorigin=""/>
     <style type="text/css">
       body {
        position: absolute;
@@ -54,8 +56,10 @@
         opacity: 0.7;
       }
     </style>
-    <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
-    <script src="http://cdn.leafletjs.com/leaflet-0.7.1/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+      integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+      crossorigin=""></script>
   </head>
   <body>
     <div id='map' style='position: absolute; width: 100%; top: 0; bottom: 0;'></div>
@@ -179,8 +183,8 @@
         
           function onEachFeature(feature, layer) {
             layer.on({
-              'vmouseover mouseover': highlightFeature,
-              'vmouseleave mouseout': resetHighlight,
+              'mouseover': highlightFeature,
+              'mouseout': resetHighlight,
               'click': highlightFeature
             });
           }
