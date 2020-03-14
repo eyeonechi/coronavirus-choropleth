@@ -67,108 +67,108 @@
         let highlighted = null;
         let cases = <%- cases %>;
 
+        var map = L.map('map').setView([40.866667, 	34.566667], 2);
+        var loader = L.control.loader().addTo(map);
+        var geojson;
+
+        if (L.Browser.touch) {
+          map.dragging.disable();
+          map.doubleClickZoom.disable();
+        }
+
+        function matchCountry(name, cases) {
+          for (let i = 0; i < cases.length; i ++) {
+            if (cases[i].country === 'USA' && name === 'United States') {
+              return cases[i];
+            } else if (cases[i].country === 'UK' && name === 'United Kingdom') {
+              return cases[i];
+            } else if (cases[i].country === 'UAE' && name === 'United Arab Emirates') {
+              return cases[i];
+            } else if (cases[i].country === 'Czechia' && name === 'Czech Rep.') {
+              return cases[i];
+            } else if (cases[i].country === 'Bosnia and Herzegovina' && name === 'Bosnia and Herz.') {
+              return cases[i];
+            } else if (cases[i].country === 'N. Korea' && name === 'Dem. Rep. Korea') {
+              return cases[i];
+            } else if (cases[i].country === 'S. Korea' && name === 'Korea') {
+              return cases[i];
+            } else if (cases[i].country === 'Laos' && name === 'Lao PDR') {
+              return cases[i];
+            } else if (cases[i].country === 'Dominican Republic' && name === 'Dominican Rep.') {
+              return cases[i];
+            } else if (cases[i].country === name) {
+              return cases[i];
+            }
+          }
+          return null;
+        }
+
+        function getColor(d) {
+          return d > 10000 ? '#800026' :
+                 d > 5000  ? '#BD0026' :
+                 d > 2000  ? '#E31A1C' :
+                 d > 1000  ? '#FC4E2A' :
+                 d > 500   ? '#FD8D3C' :
+                 d > 20    ? '#FEB24C' :
+                 d > 0     ? '#FED976' :
+                             '#FFFFFF';
+        }
+
+        function style(feature) {
+          return {
+            stroke: true,
+            fill: true,
+            fillColor: getColor(feature.properties.cases),
+            weight: 0.5,
+            opacity: 1,
+            color: 'black',
+            dashArray: '3',
+            fillOpacity: 0.7
+          };
+        }
+
+        function highlightFeature(e) {
+          if (highlighted !== null) {
+            geojson.resetStyle(highlighted);
+            highlighted = null;
+          }
+          var layer = e.target;
+
+          layer.setStyle({
+            stroke: true,
+            weight: 1,
+            color: 'black',
+            dashArray: '',
+            fillOpacity: 0.7
+          });
+
+          if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+            layer.bringToFront();
+          }
+
+          info.update(layer.feature.properties);
+          highlighted = e.target;
+        }
+
+        function resetHighlight(e) {
+          geojson.resetStyle(e.target);
+          info.update();
+        }
+
+      
+        function onEachFeature(feature, layer) {
+          layer.on({
+            'mouseover': highlightFeature,
+            'mouseout': resetHighlight,
+            'click': highlightFeature
+          });
+        }
+
+        function zoomToFeature(e) {
+          map.fitBounds(e.target.getBounds());
+        }
+
         $.getJSON('countries.geo.json', function(data) {
-
-          var map = L.map('map').setView([40.866667, 	34.566667], 2);
-          var loader = L.control.loader().addTo(map);
-          var geojson;
-
-          if (L.Browser.touch) {
-            map.dragging.disable();
-            map.doubleClickZoom.disable();
-          }
-
-          function matchCountry(name, cases) {
-            for (let i = 0; i < cases.length; i ++) {
-              if (cases[i].country === 'USA' && name === 'United States') {
-                return cases[i];
-              } else if (cases[i].country === 'UK' && name === 'United Kingdom') {
-                return cases[i];
-              } else if (cases[i].country === 'UAE' && name === 'United Arab Emirates') {
-                return cases[i];
-              } else if (cases[i].country === 'Czechia' && name === 'Czech Rep.') {
-                return cases[i];
-              } else if (cases[i].country === 'Bosnia and Herzegovina' && name === 'Bosnia and Herz.') {
-                return cases[i];
-              } else if (cases[i].country === 'N. Korea' && name === 'Dem. Rep. Korea') {
-                return cases[i];
-              } else if (cases[i].country === 'S. Korea' && name === 'Korea') {
-                return cases[i];
-              } else if (cases[i].country === 'Laos' && name === 'Lao PDR') {
-                return cases[i];
-              } else if (cases[i].country === 'Dominican Republic' && name === 'Dominican Rep.') {
-                return cases[i];
-              } else if (cases[i].country === name) {
-                return cases[i];
-              }
-            }
-            return null;
-          }
-
-          function getColor(d) {
-            return d > 10000 ? '#800026' :
-                  d > 5000  ? '#BD0026' :
-                  d > 2000  ? '#E31A1C' :
-                  d > 1000  ? '#FC4E2A' :
-                  d > 500   ? '#FD8D3C' :
-                  d > 20   ? '#FEB24C' :
-                  d > 0    ? '#FED976' :
-                            '#FFFFFF';
-          }
-
-          function style(feature) {
-            return {
-              stroke: true,
-              fill: true,
-              fillColor: getColor(feature.properties.cases),
-              weight: 0.5,
-              opacity: 1,
-              color: 'black',
-              dashArray: '3',
-              fillOpacity: 0.7
-            };
-          }
-
-          function highlightFeature(e) {
-            if (highlighted !== null) {
-              geojson.resetStyle(highlighted);
-              highlighted = null;
-            }
-            var layer = e.target;
-
-            layer.setStyle({
-              stroke: true,
-              weight: 1,
-              color: 'black',
-              dashArray: '',
-              fillOpacity: 0.7
-            });
-
-            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-              layer.bringToFront();
-            }
-
-            info.update(layer.feature.properties);
-            highlighted = e.target;
-          }
-
-          function resetHighlight(e) {
-            geojson.resetStyle(e.target);
-            info.update();
-          }
-
-        
-          function onEachFeature(feature, layer) {
-            layer.on({
-              'mouseover': highlightFeature,
-              'mouseout': resetHighlight,
-              'click': highlightFeature
-            });
-          }
-
-          function zoomToFeature(e) {
-            map.fitBounds(e.target.getBounds());
-          }
 
           for (let j = 0; j < data.features.length; j ++) {
             data.features[j].properties.cases = 0;
@@ -190,6 +190,7 @@
             //   console.log(data.features[j].properties.name);
             // }
           }
+          
           loader.hide();
 
           geojson = L.geoJson(data, {
