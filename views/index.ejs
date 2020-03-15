@@ -53,30 +53,48 @@
         margin-right: 8px;
         opacity: 0.7;
       }
+      .databutton {
+        border-radius: 4px;
+        background-color: #fff;
+        line-height: 26px;
+        height: 26px;
+        width: 64px;
+        text-align: center;
+        color: black;
+        border: none;
+        font: bold 10px 'Lucida Sans', Monaco, monospace;
+        box-shadow: 4px 4px 4px 4px rgba(0,0,0,0.2);
+      }
     </style>
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
     <link rel="stylesheet" href="leaflet.loader.css" />
     <script src="leaflet.loader.js"></script>
+    <script src="L.Control.Button.js"></script>
   </head>
   <body>
     <div id='map' style='position: absolute; width: 100%; top: 0; bottom: 0;'></div>
-    <% if (cases !== null) { %>
+    <% if (covid19 !== null) { %>
       <script>
 
         let highlighted = null;
-        let cases = <%- cases %>;
+
+        let covid19 = <%- covid19 %>;
+        let sars = <%- sars %>;
+        let mers = <%- mers %>;
 
         var map = L.map('map').setView([40.866667, 	34.566667], 2);
         var loader = L.control.loader().addTo(map);
         var geojson;
+        var countries;
 
         if (L.Browser.touch) {
           map.dragging.disable();
           map.doubleClickZoom.disable();
         }
 
-        $.getJSON('countries.geo.json', function(data) {
+        $.getJSON('countries.geo.json', function(countries) {
+          countries = countries;
 
           function matchCountry(name, cases) {
             for (let i = 0; i < cases.length; i ++) {
@@ -170,34 +188,76 @@
             map.fitBounds(e.target.getBounds());
           }
 
-          for (let j = 0; j < data.features.length; j ++) {
-            data.features[j].properties.cases = 0;
-            data.features[j].properties.todayCases = 0;
-            data.features[j].properties.deaths = 0;
-            data.features[j].properties.todayDeaths = 0;
-            data.features[j].properties.recovered = 0;
-            data.features[j].properties.critical = 0;
-            let match = matchCountry(data.features[j].properties.name, cases);
-            if (match !== null) {
-              data.features[j].properties.cases = match.cases;
-              data.features[j].properties.todayCases = match.todayCases;
-              data.features[j].properties.deaths = match.deaths;
-              data.features[j].properties.todayDeaths = match.todayDeaths;
-              data.features[j].properties.recovered = match.recovered;
-              data.features[j].properties.critical = match.critical;
-            }
-            // else {
-            //   console.log(data.features[j].properties.name);
-            // }
-          }
-          
-          loader.hide();
+          function display(type) {
+            let data = countries;
 
-          geojson = L.geoJson(data, {
-            clickable: true,
-            style: style,
-            onEachFeature: onEachFeature
-          }).addTo(map);
+            for (let j = 0; j < data.features.length; j ++) {
+              data.features[j].properties.cases = 0;
+              data.features[j].properties.todayCases = 0;
+              data.features[j].properties.deaths = 0;
+              data.features[j].properties.todayDeaths = 0;
+              data.features[j].properties.recovered = 0;
+              data.features[j].properties.critical = 0;
+              let match;
+              if (type === 'sars') {
+                match = matchCountry(data.features[j].properties.name, sars);
+              } else if (type === 'mers') {
+                match = matchCountry(data.features[j].properties.name, mers);
+              } else {
+                match = matchCountry(data.features[j].properties.name, covid19);
+              }
+              if (match !== null) {
+                data.features[j].properties.cases = match.cases;
+                data.features[j].properties.todayCases = match.todayCases;
+                data.features[j].properties.deaths = match.deaths;
+                data.features[j].properties.todayDeaths = match.todayDeaths;
+                data.features[j].properties.recovered = match.recovered;
+                data.features[j].properties.critical = match.critical;
+              }
+            }
+
+            loader.hide();
+
+            geojson = L.geoJson(data, {
+              clickable: true,
+              style: style,
+              onEachFeature: onEachFeature
+            }).addTo(map);
+          }
+
+          display('covid19');
+
+          // Buttons
+
+          var covid19Button = new L.Control.Button('COVID-19', {
+            position: 'topleft',
+            className: 'databutton'
+          });
+          covid19Button.addTo(map);
+          covid19Button.on('click', function () {
+            map.removeLayer(geojson);
+            display('covid19');
+          });
+
+          var mersButton = new L.Control.Button('MERS', {
+            position: 'topleft',
+            className: 'databutton'
+          });
+          mersButton.addTo(map);
+          mersButton.on('click', function () {
+            map.removeLayer(geojson);
+            display('mers');
+          });
+
+          var sarsButton = new L.Control.Button('SARS', {
+            position: 'topleft',
+            className: 'databutton'
+          });
+          sarsButton.addTo(map);
+          sarsButton.on('click', function () {
+            map.removeLayer(geojson);
+            display('sars');
+          });
 
           // About
 
