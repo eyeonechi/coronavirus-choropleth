@@ -16,12 +16,12 @@ app.use(express.static('public'));
 app.set('view engine', 'ejs');
 
 app.get('/', function (req, res) {
-  csv()
-  .fromFile('data/MERS.csv')
-  .then((mers) => {
-    csv()
-    .fromFile('data/SARS.csv')
-    .then((sars) => {
+  // csv()
+  // .fromFile('data/MERS.csv')
+  // .then((mers) => {
+  //   csv()
+  //   .fromFile('data/SARS.csv')
+  //   .then((sars) => {
       fetch(
         'https://corona.lmao.ninja/countries',
         {
@@ -60,8 +60,7 @@ app.get('/', function (req, res) {
           }
           countries[element.properties.name_long.toLowerCase()] = new Country(
             element.properties.name_long,
-            element.geometry,
-            0
+            element.geometry
           )
         });
 
@@ -76,7 +75,10 @@ app.get('/', function (req, res) {
             countries[element.country.toLowerCase()].deaths = element.deaths;
             countries[element.country.toLowerCase()].todayDeaths = element.todayDeaths;
             countries[element.country.toLowerCase()].recovered = element.recovered;
+            countries[element.country.toLowerCase()].active = element.active;
             countries[element.country.toLowerCase()].critical = element.critical;
+            countries[element.country.toLowerCase()].casesPerOneMillion = element.casesPerOneMillion;
+            countries[element.country.toLowerCase()].deathsPerOneMillion = element.deathsPerOneMillion;
           }
         });
 
@@ -100,8 +102,8 @@ app.get('/', function (req, res) {
 
         res.render('index', {
           covid19: JSON.stringify(covid19),
-          sars: JSON.stringify(sars),
-          mers: JSON.stringify(mers)
+          // sars: JSON.stringify(sars),
+          // mers: JSON.stringify(mers)
         });
 
       })
@@ -109,6 +111,6 @@ app.get('/', function (req, res) {
         console.error(err);
         res.render('Unable to fetch latest data');
       });
-    });
-  });
+  //   });
+  // });
 });
