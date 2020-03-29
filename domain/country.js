@@ -1,16 +1,17 @@
 class Country {
 
-  // name = '';
-  // geometry = '';
-  // cases = 0;
-  // deaths = 0;
-  // timeline = null;
-
-  constructor (name, geometry, cases) {
+  constructor (name, geometry) {
     this.name = name;
     this.geometry = geometry;
-    this.cases = cases;
-    this.timeline = {};
+    this.cases = 0;
+    this.todayCases = 0;
+    this.deaths = 0;
+    this.todayDeaths = 0;
+    this.active = 0;
+    this.recovered = 0;
+    this.critical = 0;
+    this.casesPerOneMillion = 0;
+    this.deathsPerOneMillion = 0;
   }
 
   toFeature () {
@@ -20,7 +21,14 @@ class Country {
         name: this.name,
         type: 'country',
         cases: this.cases,
-        deaths: this.deaths
+        todayCases: this.todayCases,
+        deaths: this.deaths,
+        todayDeaths: this.todayDeaths,
+        active: this.active,
+        recovered: this.recovered,
+        critical: this.critical,
+        casesPerOneMillion: this.casesPerOneMillion,
+        deathsPerOneMillion: this.deathsPerOneMillion
       },
       geometry: this.geometry
     };

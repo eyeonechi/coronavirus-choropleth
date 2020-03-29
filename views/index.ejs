@@ -83,8 +83,6 @@
         let highlighted = null;
 
         let covid19 = <%- covid19 %>;
-        let sars = <%- sars %>;
-        let mers = <%- mers %>;
 
         let map = L.map('map').setView([40.866667, 	34.566667], 2);
         let loader = L.control.loader().addTo(map);
@@ -217,7 +215,7 @@
 */
         // About
 
-        var about = L.control({position: 'bottomleft'});
+        var about = L.control({position: 'bottomright'});
 
         about.onAdd = function (map) {
           this._div = L.DomUtil.create('div', 'about');
@@ -238,7 +236,7 @@
         };
 
         info.update = function (props) {
-          this._div.innerHTML = '<h4>Coronavirus Statistics</h4>'
+          this._div.innerHTML = '<h4>Covid-19 Statistics</h4>'
           + (props
           ? '<b>' + props.name + '</b><br />'
             + props.cases + ' cases<br />'
@@ -246,7 +244,10 @@
             + props.deaths + ' deaths<br />'
             + props.todayDeaths + ' deaths today<br />'
             + props.recovered + ' recovered<br />'
+            + props.active + ' active<br />'
             + props.critical + ' critical<br />'
+            + props.casesPerOneMillion + ' cases / million<br />'
+            + props.deathsPerOneMillion + ' deaths / million<br />'
           : (L.Browser.touch) ? 'Tap a country' : 'Hover over a country');
         };
 
@@ -254,7 +255,7 @@
 
         // Legend
 
-        var legend = L.control({position: 'bottomright'});
+        var legend = L.control({position: 'bottomleft'});
 
         legend.onAdd = function (map) {
 
