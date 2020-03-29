@@ -1,7 +1,8 @@
 class Country {
 
-  constructor (name, geometry) {
+  constructor (name, continent, geometry) {
     this.name = name;
+    this.continent = continent;
     this.geometry = geometry;
     this.cases = 0;
     this.todayCases = 0;

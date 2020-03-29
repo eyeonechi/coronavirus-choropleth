@@ -77,17 +77,17 @@
   <body>
     <div id='map' style='position: absolute; width: 100%; top: 0; bottom: 0;'></div>
     <div id='slider'></div>
-    <% if (covid19 !== null) { %>
+    <% if (true) { %>
       <script>
 
         let highlighted = null;
-
-        let covid19 = <%- covid19 %>;
+        let countries = <%- countries %>;
+        let continents = <%- continents %>;
+        let world = <%- world %>;
 
         let map = L.map('map').setView([40.866667, 	34.566667], 2);
         let loader = L.control.loader().addTo(map);
         let geojson;
-        let countries;
 
         if (L.Browser.touch) {
           map.dragging.disable();
@@ -167,19 +167,22 @@
           map.fitBounds(e.target.getBounds());
         }
 
-        function display(type) {
+        function display() {
           loader.hide();
 
-          geojson = L.geoJson(
-            type === 'sars' ? sars :
-            type === 'mers' ? mers : covid19, {
+          geojson = L.geoJson.ajax(null, {
             clickable: true,
             style: style,
             onEachFeature: onEachFeature
           }).addTo(map);
+
+          for (let continent of continents) {
+            geojson.addUrl(`http://localhost:3000/continents/${continent}`);
+          }
+
         }
 
-        display('covid19');
+        display();
 
         // Buttons
 /*
@@ -248,7 +251,13 @@
             + props.critical + ' critical<br />'
             + props.casesPerOneMillion + ' cases / million<br />'
             + props.deathsPerOneMillion + ' deaths / million<br />'
-          : (L.Browser.touch) ? 'Tap a country' : 'Hover over a country');
+          : '<b>' + 'World' + '</b><br />'
+            + world.cases + ' cases<br />'
+            + world.deaths + ' deaths<br />'
+            + world.recovered + ' recovered<br />'
+            + world.active + ' active<br />'
+            // + (L.Browser.touch) ? 'Tap a country' : 'Hover over a country'
+          );
         };
 
         info.addTo(map);
