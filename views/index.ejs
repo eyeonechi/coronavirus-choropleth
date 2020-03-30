@@ -1,11 +1,22 @@
+<!-- Coronavirus Choropleth -->
+<!-- Frontend Webpage       -->
+<!-- Eyeonechi 2020         -->
+
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Coronavirus Tracker</title>
+    <title>Coronavirus Choropleth</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel='shortcut icon' href='favicon.ico' type='image/x-icon' />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.Spin/1.1.2/leaflet.spin.min.js"></script>
     <style type="text/css">
       body {
        position: absolute;
@@ -53,231 +64,216 @@
         margin-right: 8px;
         opacity: 0.7;
       }
-      .databutton {
-        border-radius: 4px;
-        background-color: #fff;
-        line-height: 26px;
-        height: 26px;
-        width: 64px;
-        text-align: center;
-        color: black;
-        border: none;
-        font: bold 10px 'Lucida Sans', Monaco, monospace;
-        box-shadow: 4px 4px 4px 4px rgba(0,0,0,0.2);
+      #map {
+        position: absolute;
+        width: 100%;
+        top: 0;
+        bottom: 0;
       }
-      #slider {position: absolute; bottom: 50px; left: 50px; width: 300px}
     </style>
-    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
-    <link rel="stylesheet" href="leaflet.loader.css" />
-    <script src="leaflet.loader.js"></script>
-    <script src="leaflet.ajax.min.js"></script>
-    <script src="L.Control.Button.js"></script>
   </head>
   <body>
-    <div id='map' style='position: absolute; width: 100%; top: 0; bottom: 0;'></div>
-    <div id='slider'></div>
-    <% if (covid19 !== null) { %>
-      <script>
+    <div id='map'></div>
+    <script>
+      let highlighted = null;
+      let countries = <%- countries %>;
+      let continents = <%- continents %>;
+      let world = <%- world %>;
+      let map = L.map('map').setView([40.866667, 	34.566667], 2);
+      let geojson;
+      let display = 'cases';
 
-        let highlighted = null;
-
-        let covid19 = <%- covid19 %>;
-
-        let map = L.map('map').setView([40.866667, 	34.566667], 2);
-        let loader = L.control.loader().addTo(map);
-        let geojson;
-        let countries;
-
-        if (L.Browser.touch) {
-          map.dragging.disable();
-          map.doubleClickZoom.disable();
-        }
-
-        $('#slider').click(function (event) {
-          range = $('#slider').val();
-          rangeMin = range.slice(0, 1).toString().slice(0, 10);
-          rangeMax = range.slice(1).toString().slice(0, 10);
-        });
-
-        // var geojsonLayer = new L.GeoJSON.AJAX("countries.geo.json");
-
-        function getColor(d) {
-          return d > 10000 ? '#800026' :
-                  d > 5000  ? '#BD0026' :
-                  d > 2000  ? '#E31A1C' :
-                  d > 1000  ? '#FC4E2A' :
-                  d > 500   ? '#FD8D3C' :
-                  d > 20    ? '#FEB24C' :
-                  d > 0     ? '#FED976' :
+      function getColor(d) {
+        if (display === 'deaths') {
+          return d > 100000 ? '#252525' :
+                 d > 50000  ? '#525252' :
+                 d > 10000  ? '#737373' :
+                 d > 5000   ? '#969696' :
+                 d > 1000   ? '#bdbdbd' :
+                 d > 100    ? '#d9d9d9' :
+                 d > 0      ? '#f0f0f0' :
+                              '#FFFFFF';
+        } else if (display === 'recovered') {
+          return d > 100000 ? '#005a32' :
+                 d > 50000  ? '#238b45' :
+                 d > 10000  ? '#41ab5d' :
+                 d > 5000   ? '#74c476' :
+                 d > 1000   ? '#a1d99b' :
+                 d > 100    ? '#a1d99b' :
+                 d > 0      ? '#e5f5e0' :
                               '#FFFFFF';
         }
+        return d > 100000 ? '#800026' :
+               d > 50000  ? '#BD0026' :
+               d > 10000  ? '#E31A1C' :
+               d > 5000   ? '#FC4E2A' :
+               d > 1000   ? '#FD8D3C' :
+               d > 100    ? '#FEB24C' :
+               d > 0      ? '#FED976' :
+                            '#FFFFFF';
+      }
 
-        function style(feature) {
-          return {
-            stroke: true,
-            fill: true,
-            fillColor: getColor(feature.properties.cases),
-            weight: 0.5,
-            opacity: 1,
-            color: 'black',
-            dashArray: '3',
-            fillOpacity: 0.7
-          };
+      function style(feature) {
+        return {
+          stroke: true,
+          fill: true,
+          fillColor: getColor(
+            display === 'deaths'    ? feature.properties.deaths    :
+            display === 'recovered' ? feature.properties.recovered : 
+                                      feature.properties.cases
+          ),
+          weight: 0.5,
+          opacity: 1,
+          color: 'black',
+          dashArray: '3',
+          fillOpacity: 0.7
+        };
+      }
+
+      function highlightFeature(e) {
+        if (highlighted !== null) {
+          geojson.resetStyle(highlighted);
+          highlighted = null;
         }
+        var layer = e.target;
+        layer.setStyle({
+          stroke: true,
+          weight: 1,
+          color: 'black',
+          dashArray: '',
+          fillOpacity: 0.7
+        });
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+          layer.bringToFront();
+        }
+        info.update(layer.feature.properties);
+        highlighted = e.target;
+      }
 
-        function highlightFeature(e) {
-          if (highlighted !== null) {
-            geojson.resetStyle(highlighted);
-            highlighted = null;
+      function resetHighlight(e) {
+        geojson.resetStyle(e.target);
+        info.update();
+      }
+
+      function onEachFeature(feature, layer) {
+        layer.on({
+          'mouseover': highlightFeature,
+          'mouseout': resetHighlight,
+          'click': highlightFeature
+        });
+      }
+
+      function zoomToFeature(e) {
+        map.fitBounds(e.target.getBounds());
+      }
+
+      function main() {
+        map.spin(true);
+        geojson = L.geoJson.ajax(continents.map((continent) => `continents/${continent}`), {
+          clickable: true,
+          style: style,
+          onEachFeature: onEachFeature
+        }).addTo(map);
+        geojson.on('data:loaded', function () {
+          map.spin(false);
+        });
+      }
+
+      main();
+
+      // Display toggle button
+      let toggleButton = L.easyButton({
+        states: [{
+          stateName: 'cases',
+          icon:      '&#129298;',
+          title:     'Cases',
+          onClick: function(btn, map) {
+            display = 'deaths';
+            geojson.resetStyle();
+            legend.update();
+            btn.state('deaths');
           }
-          var layer = e.target;
-
-          layer.setStyle({
-            stroke: true,
-            weight: 1,
-            color: 'black',
-            dashArray: '',
-            fillOpacity: 0.7
-          });
-
-          if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-            layer.bringToFront();
+        }, {
+          stateName: 'deaths',
+          icon:      '&#128128;',
+          title:     'Deaths',
+          onClick: function(btn, map) {
+            display = 'recovered';
+            geojson.resetStyle();
+            legend.update();
+            btn.state('recovered');
           }
-
-          info.update(layer.feature.properties);
-          highlighted = e.target;
-        }
-
-        function resetHighlight(e) {
-          geojson.resetStyle(e.target);
-          info.update();
-        }
-
-      
-        function onEachFeature(feature, layer) {
-          layer.on({
-            'mouseover': highlightFeature,
-            'mouseout': resetHighlight,
-            'click': highlightFeature
-          });
-        }
-
-        function zoomToFeature(e) {
-          map.fitBounds(e.target.getBounds());
-        }
-
-        function display(type) {
-          loader.hide();
-
-          geojson = L.geoJson(
-            type === 'sars' ? sars :
-            type === 'mers' ? mers : covid19, {
-            clickable: true,
-            style: style,
-            onEachFeature: onEachFeature
-          }).addTo(map);
-        }
-
-        display('covid19');
-
-        // Buttons
-/*
-        var covid19Button = new L.Control.Button('COVID-19', {
-          position: 'topleft',
-          className: 'databutton'
-        });
-        covid19Button.addTo(map);
-        covid19Button.on('click', function () {
-          map.removeLayer(geojson);
-          display('covid19');
-        });
-
-        var mersButton = new L.Control.Button('MERS', {
-          position: 'topleft',
-          className: 'databutton'
-        });
-        mersButton.addTo(map);
-        mersButton.on('click', function () {
-          map.removeLayer(geojson);
-          display('mers');
-        });
-
-        var sarsButton = new L.Control.Button('SARS', {
-          position: 'topleft',
-          className: 'databutton'
-        });
-        sarsButton.addTo(map);
-        sarsButton.on('click', function () {
-          map.removeLayer(geojson);
-          display('sars');
-        });
-*/
-        // About
-
-        var about = L.control({position: 'bottomright'});
-
-        about.onAdd = function (map) {
-          this._div = L.DomUtil.create('div', 'about');
-          this._div.innerHTML = '<h4>Eyeonechi</h4>2020';
-          return this._div;
-        };
-
-        about.addTo(map);
-
-        // Info
-
-        var info = L.control();
-
-        info.onAdd = function (map) {
-          this._div = L.DomUtil.create('div', 'info');
-          this.update();
-          return this._div;
-        };
-
-        info.update = function (props) {
-          this._div.innerHTML = '<h4>Covid-19 Statistics</h4>'
-          + (props
-          ? '<b>' + props.name + '</b><br />'
-            + props.cases + ' cases<br />'
-            + props.todayCases + ' cases today<br />'
-            + props.deaths + ' deaths<br />'
-            + props.todayDeaths + ' deaths today<br />'
-            + props.recovered + ' recovered<br />'
-            + props.active + ' active<br />'
-            + props.critical + ' critical<br />'
-            + props.casesPerOneMillion + ' cases / million<br />'
-            + props.deathsPerOneMillion + ' deaths / million<br />'
-          : (L.Browser.touch) ? 'Tap a country' : 'Hover over a country');
-        };
-
-        info.addTo(map);
-
-        // Legend
-
-        var legend = L.control({position: 'bottomleft'});
-
-        legend.onAdd = function (map) {
-
-          var div = L.DomUtil.create('div', 'info legend'),
-              grades = [0, 1, 20, 500, 1000, 2000, 5000, 10000],
-              labels = [];
-
-          // loop through our density intervals and generate a label with a colored square for each interval
-          for (var i = 0; i < grades.length; i ++) {
-            div.innerHTML +=
-              '<div style="display: block">'
-              + '<i style="display: inline-block; background:' + getColor(grades[i] + 1) + ';"></i>'
-              + '<span style="display: inline-block;">' + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '</span>'
-              + '</div>' : '+');
+        }, {
+          stateName: 'recovered',
+          icon:      '&#128513;',
+          title:     'Recovered',
+          onClick: function(btn, map) {
+            display = 'cases';
+            geojson.resetStyle();
+            legend.update();
+            btn.state('cases');
           }
+        }]
+      }).addTo(map);
 
-          return div;
-        };
+      // About panel
+      var about = L.control({position: 'bottomright'});
+      about.onAdd = function (map) {
+        this._div = L.DomUtil.create('div', 'about');
+        this._div.innerHTML = '<h4>Eyeonechi</h4>2020';
+        return this._div;
+      };
+      about.addTo(map);
 
-        legend.addTo(map);
+      // Statistics information panel
+      var info = L.control();
+      info.onAdd = function (map) {
+        this._div = L.DomUtil.create('div', 'info');
+        this.update();
+        return this._div;
+      };
+      info.update = function (props) {
+        this._div.innerHTML = '<h4>Covid-19 Statistics</h4>'
+        + (props
+        ? '<b>' + props.name + '</b><br />'
+          + props.cases + ' cases<br />'
+          + props.todayCases + ' cases today<br />'
+          + props.deaths + ' deaths<br />'
+          + props.todayDeaths + ' deaths today<br />'
+          + props.recovered + ' recovered<br />'
+          + props.active + ' active<br />'
+          + props.critical + ' critical<br />'
+          + props.casesPerOneMillion + ' cases / million<br />'
+          + props.deathsPerOneMillion + ' deaths / million<br />'
+        : '<b>World</b><br />'
+          + world.cases + ' cases<br />'
+          + world.deaths + ' deaths<br />'
+          + world.recovered + ' recovered<br />'
+          + world.active + ' active<br />'
+        );
+      };
+      info.addTo(map);
 
-      </script>
-    <% } %>
+      // Map legend panel
+      var legend = L.control({position: 'bottomleft'});
+      legend.onAdd = function (map) {
+        this._div = L.DomUtil.create('div', 'info legend'),
+            grades = [0, 1, 100, 1000, 5000, 10000, 50000, 100000],
+            labels = [];
+        this.update();
+        return this._div;
+      };
+      legend.update = function(props) {
+        this._div.innerHTML = '<h4>Number of ' + display + '</h4>';
+        for (var i = 0; i < grades.length; i ++) {
+          this._div.innerHTML +=
+            '<div style="display: block">'
+            + '<i style="display: inline-block; background:' + getColor(grades[i] + 1) + ';"></i>'
+            + '<span style="display: inline-block;">' + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '</span>'
+            + '</div>' : '+');
+        }
+      }
+      legend.addTo(map);
+    </script>
   </body>
 </html>
