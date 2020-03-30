@@ -1,3 +1,9 @@
+/*
+ * Coronavirus Choropleth
+ * Backend server
+ * Eyeonechi 2020
+ */
+
 var express = require('express');
 var app = express();
 var fetch = require('node-fetch');
@@ -9,8 +15,6 @@ let countries = {};
 let continents = {};
 let world = {};
 
-// fs.writeFileSync('data/covid19.json', JSON.stringify(covid19));
-
 var server = app.listen(process.env.PORT || 3000, function () {
   var host = server.address().address
   var port = server.address().port
@@ -21,10 +25,12 @@ app.use(express.static('public'));
 
 app.set('view engine', 'ejs');
 
+/*
+ * Entry point to the webpage
+ */
 app.get('/', function (req, res) {
 
   /* all endpoint */
-
   fetch(
     'https://corona.lmao.ninja/all',
     {
@@ -49,6 +55,7 @@ app.get('/', function (req, res) {
     ).then(res => res.json())
     .then(covid19Countries => {
       
+      /* geojson polygons */
       let geojson = JSON.parse(fs.readFileSync('data/medium.countries.geo.json', 'utf8'));
     
       geojson.features.map((element) => {
@@ -94,7 +101,6 @@ app.get('/', function (req, res) {
         )
       });
     
-      // let covid19Countries = JSON.parse(fs.readFileSync('data/countries.json', 'utf8'));
       covid19Countries.map((element) => {
         if (element.country === 'Bosnia and Herzegovina') {
           element.country = 'Bosnia';
@@ -121,24 +127,7 @@ app.get('/', function (req, res) {
         }
       });
 
-      // let covid19Historical = JSON.parse(fs.readFileSync('data/historical.json', 'utf8'));
-      // covid19Historical.map((element) => {
-      //   if (countries[element.country.toLowerCase()]) {
-      //     if (element.province) {
-
-      //     } else {
-      //       countries[element.country.toLowerCase()].timeline = element.timeline;
-      //     }
-      //   }
-      // });
-
-      // let covid19 = {
-      //   type: 'FeatureCollection',
-      //   features: Object.values(countries).map((country) => country.toFeature())
-      // };
-
-      /* render */
-
+      /* render webpage */
       res.render('index', {
         countries: JSON.stringify(Object.keys(countries)),
         continents: JSON.stringify(Object.keys(continents)),
@@ -157,6 +146,9 @@ app.get('/', function (req, res) {
 
 });
 
+/*
+ * Returns a country as a feature collection
+ */
 app.get('/countries/:country', function (req, res) {
   let country = req.params.country;
   res.send(JSON.stringify ({
@@ -165,6 +157,9 @@ app.get('/countries/:country', function (req, res) {
   }));
 });
 
+/*
+ * Returns a continent as a feature collection
+ */
 app.get('/continents/:continent', function (req, res) {
   let continent = req.params.continent;
   res.send(JSON.stringify (continents[continent].toFeatureCollection ()));
