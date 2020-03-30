@@ -1,7 +1,6 @@
 var express = require('express');
 var app = express();
 var fetch = require('node-fetch');
-var csv = require('csvtojson');
 var fs = require('fs');
 var Country = require('../domain/country');
 var Continent = require('../domain/continent');

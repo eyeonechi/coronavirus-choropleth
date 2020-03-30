@@ -11,6 +11,8 @@
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.Spin/1.1.2/leaflet.spin.min.js"></script>
     <style type="text/css">
       body {
        position: absolute;
@@ -87,20 +89,28 @@
       let world = <%- world %>;
       let map = L.map('map').setView([40.866667, 	34.566667], 2);
       let geojson;
-      let displayDeaths = false;
-
-      if (L.Browser.touch) {
-        map.dragging.disable();
-        map.doubleClickZoom.disable();
-      }
-
-      $('#slider').click(function (event) {
-        range = $('#slider').val();
-        rangeMin = range.slice(0, 1).toString().slice(0, 10);
-        rangeMax = range.slice(1).toString().slice(0, 10);
-      });
+      let display = 'cases';
 
       function getColor(d) {
+        if (display === 'deaths') {
+          return d > 100000 ? '#252525' :
+                 d > 50000  ? '#525252' :
+                 d > 10000  ? '#737373' :
+                 d > 5000   ? '#969696' :
+                 d > 1000   ? '#bdbdbd' :
+                 d > 100    ? '#d9d9d9' :
+                 d > 0      ? '#f0f0f0' :
+                              '#FFFFFF';
+        } else if (display === 'recovered') {
+          return d > 100000 ? '#005a32' :
+                 d > 50000  ? '#238b45' :
+                 d > 10000  ? '#41ab5d' :
+                 d > 5000   ? '#74c476' :
+                 d > 1000   ? '#a1d99b' :
+                 d > 100    ? '#a1d99b' :
+                 d > 0      ? '#e5f5e0' :
+                              '#FFFFFF';
+        }
         return d > 100000 ? '#800026' :
                d > 50000  ? '#BD0026' :
                d > 10000  ? '#E31A1C' :
@@ -115,7 +125,11 @@
         return {
           stroke: true,
           fill: true,
-          fillColor: getColor(displayDeaths ? feature.properties.deaths : feature.properties.cases),
+          fillColor: getColor(
+            display === 'deaths'    ? feature.properties.deaths    :
+            display === 'recovered' ? feature.properties.recovered : 
+                                      feature.properties.cases
+          ),
           weight: 0.5,
           opacity: 1,
           color: 'black',
@@ -162,11 +176,15 @@
       }
 
       function main() {
+        map.spin(true);
         geojson = L.geoJson.ajax(continents.map((continent) => `continents/${continent}`), {
           clickable: true,
           style: style,
           onEachFeature: onEachFeature
         }).addTo(map);
+        geojson.on('data:loaded', function () {
+          map.spin(false);
+        });
       }
 
       main();
@@ -178,8 +196,9 @@
           icon:      '&#129298;',
           title:     'Cases',
           onClick: function(btn, map) {
-            displayDeaths = !displayDeaths;
+            display = 'deaths';
             geojson.resetStyle();
+            legend.update();
             btn.state('deaths');
           }
         }, {
@@ -187,8 +206,19 @@
           icon:      '&#128128;',
           title:     'Deaths',
           onClick: function(btn, map) {
-            displayDeaths = !displayDeaths;
+            display = 'recovered';
             geojson.resetStyle();
+            legend.update();
+            btn.state('recovered');
+          }
+        }, {
+          stateName: 'recovered',
+          icon:      '&#128513;',
+          title:     'Recovered',
+          onClick: function(btn, map) {
+            display = 'cases';
+            geojson.resetStyle();
+            legend.update();
             btn.state('cases');
           }
         }]
@@ -223,7 +253,7 @@
           + props.critical + ' critical<br />'
           + props.casesPerOneMillion + ' cases / million<br />'
           + props.deathsPerOneMillion + ' deaths / million<br />'
-        : '<b>' + 'World' + '</b><br />'
+        : '<b>World</b><br />'
           + world.cases + ' cases<br />'
           + world.deaths + ' deaths<br />'
           + world.recovered + ' recovered<br />'
@@ -236,19 +266,23 @@
       // Legend
       var legend = L.control({position: 'bottomleft'});
       legend.onAdd = function (map) {
-        var div = L.DomUtil.create('div', 'info legend'),
+        this._div = L.DomUtil.create('div', 'info legend'),
             grades = [0, 1, 100, 1000, 5000, 10000, 50000, 100000],
             labels = [];
-        // loop through our density intervals and generate a label with a colored square for each interval
+        this.update();
+        return this._div;
+      };
+      legend.update = function(props) {
+        this._div.innerHTML = '<h4>Number of ' + display + '</h4>';
+        // loop through the density intervals and generate a label with a colored square for each interval
         for (var i = 0; i < grades.length; i ++) {
-          div.innerHTML +=
+          this._div.innerHTML +=
             '<div style="display: block">'
             + '<i style="display: inline-block; background:' + getColor(grades[i] + 1) + ';"></i>'
             + '<span style="display: inline-block;">' + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '</span>'
             + '</div>' : '+');
         }
-        return div;
-      };
+      }
       legend.addTo(map);
     </script>
   </body>
