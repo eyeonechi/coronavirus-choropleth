@@ -32,7 +32,7 @@ app.get('/', function (req, res) {
 
   /* all endpoint */
   fetch(
-    'https://corona.lmao.ninja/all',
+    'https://corona.lmao.ninja/v2/all',
     {
       headers: {
         'Accept': 'application/json',
@@ -45,7 +45,7 @@ app.get('/', function (req, res) {
 
     /* countries endpoint */
     fetch(
-      'https://corona.lmao.ninja/countries',
+      'https://corona.lmao.ninja/v2/countries',
       {
         headers: {
           'Accept': 'application/json',
@@ -54,7 +54,7 @@ app.get('/', function (req, res) {
       }
     ).then(res => res.json())
     .then(covid19Countries => {
-      
+
       /* geojson polygons */
       let geojson = JSON.parse(fs.readFileSync('data/medium.countries.geo.json', 'utf8'));
     
@@ -74,7 +74,7 @@ app.get('/', function (req, res) {
         } else if (element.properties.name_long === 'Republic of Korea') {
           element.properties.name_long = 'S. Korea';
         } else if (element.properties.name_long === 'Lao PDR') {
-          element.properties.name_long = 'Laos';
+          element.properties.name_long = "Lao People's Democratic Republic";
         } else if (element.properties.name_long === 'Russian Federation') {
           element.properties.name_long = 'Russia';
         } else if (element.properties.name_long === 'Brunei Darussalam') {
@@ -83,16 +83,20 @@ app.get('/', function (req, res) {
           element.properties.name_long = 'DRC';
         } else if (element.properties.name_long === 'Republic of Congo') {
           element.properties.name_long = 'Congo';
-        } else if (element.properties.name_long === 'Central African Republic') {
-          element.properties.name_long = 'CAR';
-        } else if (element.properties.name_long === 'Macedonia') {
-          element.properties.name_long = 'North Macedonia';
         } else if (element.properties.name_long === 'The Gambia') {
           element.properties.name_long = 'Gambia';
         } else if (element.properties.name_long === "Côte d'Ivoire") {
-          element.properties.name_long = 'Ivory Coast';
-        } else if (element.properties.name_long === "Swaziland") {
-          element.properties.name_long = 'Eswatini';
+          element.properties.name_long = "Côte d'Ivoire"; // 'Ivory Coast';
+        } else if (element.properties.name_long === "Libya") {
+          element.properties.name_long = 'Libyan Arab Jamahiriya';
+        } else if (element.properties.name_long === "Syria") {
+          element.properties.name_long = 'Syrian Arab Republic';
+        } else if (element.properties.name_long === "Northern Cyprus") {
+          element.properties.name_long = 'Cyprus';
+        } else if (element.properties.name_long === "North Macedonia") {
+          element.properties.name_long = 'Macedonia';
+        } else if (element.properties.name_long === "Falkland Islands") {
+          element.properties.name_long = 'Falkland Islands (Malvinas)';
         }
         countries[element.properties.name_long.toLowerCase()] = new Country (
           element.properties.name_long,
